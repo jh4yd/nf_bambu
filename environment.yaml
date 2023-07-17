@@ -45,6 +45,8 @@ dependencies:
     - salmon>=1.10
 # Bambu
     - bioconductor-bambu==3.0.8
+    # - bioconductor-biocparallel>=1.34.0
+    - bioconductor-deseq2
     # - bioconductor-NanoporeRNASeq
 # DAG
     # - graphviz
