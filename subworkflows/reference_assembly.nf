@@ -34,14 +34,18 @@ process map_reads{
 
 process output2 {
     debug true
-    // publish inputs to output directory
-    // label "isoforms"
+    
     label "nf_bambu"
+
+    // publish bam to a bam directory located in the output directory
+    bam_dir = params.out_dir + "bam/"
+
     publishDir (
-        params.out_dir,
+        bam_dir,
         mode: "copy",
         saveAs: { dirname ? "$dirname/$fname" : fname }
     )
+    
     input:
         tuple path(fname), val(dirname)
     output:
