@@ -19,8 +19,7 @@ include { differential_expression } from './subworkflows/differential_expression
 OPTIONAL_FILE = file("$projectDir/data/OPTIONAL_FILE")
 
 process getVersions {
-    // label "isoforms"
-    label "nf_bambu"
+    label "isoforms"
     cpus 1
     output:
         path "versions.txt"
@@ -46,8 +45,7 @@ process getVersions {
 
 
 process getParams {
-    // label "isoforms"
-    label "nf_bambu"
+    label "isoforms"
     cpus 1
     output:
         path "params.json"
@@ -61,8 +59,7 @@ process getParams {
 
 
 process decompress_ref {
-    // label "isoforms"
-    label "nf_bambu"
+    label "isoforms"
     cpus 1
     input:
         path compressed_ref
@@ -75,8 +72,7 @@ process decompress_ref {
 
 
 process decompress_annotation {
-    // label "isoforms"
-    label "nf_bambu"
+    label "isoforms"
     cpus 1
     input:
         path compressed_annotation
@@ -89,8 +85,7 @@ process decompress_annotation {
 
 // Remove empty transcript ID fields
 process preprocess_ref_annotation {
-    // label "isoforms"
-    label "nf_bambu"
+    label "isoforms"
     cpus 1
     input:
         path ref_annotation
@@ -109,8 +104,7 @@ process preprocess_reads {
     Optionally classify, trim, and orient cDNA reads using pychopper
     */
 
-    // label "isoforms"
-    label "nf_bambu"
+    label "isoforms"
     cpus 4
 
     input:
@@ -134,8 +128,7 @@ process build_minimap_index{
     /*
     Build minimap index from reference genome
     */
-    // label "isoforms"
-    label "nf_bambu"
+    label "isoforms"
     cpus params.threads
 
     input:
@@ -156,8 +149,7 @@ process split_bam{
     Output tuples containing `sample_id` so bundles can be combined later in th pipeline.
     */
 
-    // label 'isoforms'
-    label "nf_bambu"
+    label 'isoforms'
     cpus params.threads
 
     input:
@@ -202,8 +194,7 @@ process assemble_transcripts{
 
     Output gff annotation files in a tuple with `sample_id` for combining into samples later in the pipeline.
     */
-    // label 'isoforms'
-    label "nf_bambu"
+    label 'isoforms'
     cpus params.threads
 
     input:
@@ -221,40 +212,12 @@ process assemble_transcripts{
      """
 }
 
-process assemble_transcripts_bambu{
-    // running R script to generate gtf files
-    label "nf_bambu"
-    cpus params.threads
-        
-    input:
-        tuple val(sample_id), path(bam), path(ref_annotation), path(ref_genome)
-        val use_ref_ann
-    output:
-        tuple val(sample_id), path('*.gff'), emit: gff_bundles
-    script:
-        def G_FLAG = use_ref_ann == false ? '' : "-G ${ref_annotation}"
-        def prefix =  bam.name.split(/\./)[0]
-
-    """
-    pwd
-    echo ${sample_id}, ${bam}
-    echo ${ref_annotation}
-    echo ${ref_genome}
-    echo ${G_FLAG}
-    echo ${prefix}
-    
-    gtf_bambu.R ${bam} ${ref_genome} ${ref_annotation} ${prefix}
-    """
-
-}
-
 
 process merge_gff_bundles{
     /*
     Merge gff bundles into a single gff file per sample.
     */
-    // label 'isoforms'
-    label "nf_bambu"
+    label 'isoforms'
 
     input:
         tuple val(sample_id), path (gff_bundle)
@@ -281,8 +244,7 @@ process run_gffcompare{
     the requirements of the downstream processes.
     */
 
-    // label 'isoforms'
-    label "nf_bambu"
+    label 'isoforms'
 
     input:
        tuple val(sample_id), path(query_annotation)
@@ -320,8 +282,7 @@ process get_transcriptome{
         /*
         Write out a transcriptome file based on the query gff annotations.
         */
-        // label 'isoforms'
-        label "nf_bambu"
+        label 'isoforms'
 
         input:
             tuple val(sample_id), path(transcripts_gff), path(gffcmp_dir), path(reference_seq)
@@ -342,8 +303,7 @@ process get_transcriptome{
 
 process merge_transcriptomes {
     // Merge the transcriptomes from all samples
-    // label 'isoforms'
-    label "nf_bambu"
+    label 'isoforms'
     input:
         path "query_annotations/*"
         path ref_annotation
@@ -366,8 +326,7 @@ process merge_transcriptomes {
 
 process makeReport {
 
-    // label "isoforms"
-    label "nf_bambu"
+    label "isoforms"
 
     input:
         path versions
@@ -436,8 +395,7 @@ process makeReport {
 // Creates a new directory named after the sample alias and moves the fastcat results
 // into it.
 process collectFastqIngressResultsInDir {
-    // label "isoforms"
-    label "nf_bambu"
+    label "isoforms"
     input:
         // both the fastcat seqs as well as stats might be `OPTIONAL_FILE` --> stage in
         // different sub-directories to avoid name collisions
@@ -468,8 +426,7 @@ process collectFastqIngressResultsInDir {
 // put the file into. If the latter is `null`, puts it into the top-level directory.
 process output {
     // publish inputs to output directory
-    // label "isoforms"
-    label "nf_bambu"
+    label "isoforms"
     publishDir (
         params.out_dir,
         mode: "copy",
@@ -539,6 +496,8 @@ workflow pipeline {
             return l
         }
 
+        
+
         software_versions = getVersions()
         workflow_params = getParams()
         input_reads = reads.map{ meta, samples, stats -> [meta, samples]}
@@ -569,19 +528,12 @@ workflow pipeline {
                 assembly = reference_assembly(build_minimap_index.out.index, ref_genome, full_len_reads)
             }
             assembly_stats = assembly.stats.map{ it -> it[1]}.collect()
+     
             split_bam(assembly.bam)
 
+            assemble_transcripts(split_bam.out.bundles.flatMap(map_sample_ids_cls).combine(ref_annotation),use_ref_ann)
 
-            //assemble_transcripts(split_bam.out.bundles.flatMap(map_sample_ids_cls).combine(ref_annotation),use_ref_ann)
-            bambu_input = split_bam.out.bundles.flatMap(map_sample_ids_cls).combine(ref_annotation).combine(ref_genome)
-            //bambu_input.view()
-
-            //assemble_transcripts_bambu(split_bam.out.bundles.flatMap(map_sample_ids_cls).combine(ref_annotation),use_ref_ann, ref_genome)
-            assemble_transcripts_bambu(bambu_input,use_ref_ann)
-
-            //merge_gff_bundles(assemble_transcripts.out.gff_bundles.groupTuple())
-            merge_gff_bundles(assemble_transcripts_bambu.out.gff_bundles.groupTuple())
-
+            merge_gff_bundles(assemble_transcripts.out.gff_bundles.groupTuple())
             run_gffcompare(merge_gff_bundles.out.gff, ref_annotation)
 
             if (params.transcriptome_source == "denovo"){

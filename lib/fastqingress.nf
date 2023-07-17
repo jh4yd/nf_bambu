@@ -227,7 +227,7 @@ process fastcat {
             -r $fastcat_stats_outdir/per-read-stats.tsv \
             -f $fastcat_stats_outdir/per-file-stats.tsv \
             $extra_args \
-            $input \
+            -x $input \
             | bgzip -@ $task.cpus > $out
         """
 }

@@ -929,15 +929,15 @@ def main(args):
         transcriptome_summary(
             report, args.gff_annotation, sample_ids, denovo=args.denovo)
 
-    if args.gffcompare_dir is not None:
-        df_tmaps = gff_compare_plots(
-            report,
-            [Path(x) for x in args.gffcompare_dir],
-            sample_ids)
+    # if args.gffcompare_dir is not None:
+    #     df_tmaps = gff_compare_plots(
+    #         report,
+    #         [Path(x) for x in args.gffcompare_dir],
+    #         sample_ids)
 
-        if df_tmaps is not None:
-            # Skip this section. This needs some work
-            transcript_table(report, df_tmaps, args.isoform_table_nrows)
+    #     if df_tmaps is not None:
+    #         # Skip this section. This needs some work
+    #         transcript_table(report, df_tmaps, args.isoform_table_nrows)
 
     if args.cluster_qc_dirs is not None:
         cluster_quality(args.cluster_qc_dirs, report, sample_ids)

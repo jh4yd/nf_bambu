@@ -1,7 +1,7 @@
 process count_transcripts {
     // Count transcripts using Salmon.
     // library type is specified as forward stranded (-l SF) as it should have either been through pychopper or come from direct RNA reads.
-    label "isoforms"
+    label "nf_bambu"
     cpus params.threads
     input:
         tuple val(meta), path(bam), path(ref_transcriptome)
@@ -17,7 +17,7 @@ process count_transcripts {
 
 
 process mergeCounts {
-    label "isoforms"
+    label "nf_bambu"
     input:
         path counts
     output:
@@ -28,7 +28,7 @@ process mergeCounts {
 }
 
 process mergeTPM {
-    label "isoforms"
+    label "nf_bambu"
     input:
         path counts
     output:
@@ -40,7 +40,7 @@ process mergeTPM {
 
 
 process deAnalysis {
-    label "isoforms"
+    label "nf_bambu"
     errorStrategy "retry"
     maxRetries 1
     input:
@@ -77,7 +77,7 @@ process deAnalysis {
 
 
 process plotResults {
-    label "isoforms"
+    label "nf_bambu"
     input:
         path flt_count
         path res_dtu
@@ -100,7 +100,7 @@ process build_minimap_index_transcriptome{
     /*
     Build minimap index from reference genome
     */
-    label "isoforms"
+    label "nf_bambu"
     cpus params.threads
     input:
         path reference
@@ -120,7 +120,7 @@ process map_transcriptome{
     Filter reads by mapping quality.
     Filter internally-primed reads.
     */
-    label "isoforms"
+    label "nf_bambu"
     cpus params.threads
 
     input:

@@ -26,7 +26,7 @@ This closure makes both cases:
 
 
 process dump_clusters {
-    label "isoforms"
+    label "nf_bambu"
     input:
         tuple val(sample_id), path(root_cluster), path(sorted_reads_dir)
     output:
@@ -41,7 +41,7 @@ process build_backbones {
     /*
     Build coding
     */
-    label "isoforms"
+    label "nf_bambu"
 	input:
 		tuple val(sample_id), path(cluster_fq)
 	output:
@@ -118,7 +118,7 @@ process build_backbones {
 
 
 process merge_cds {
-    label "isoforms"
+    label "nf_bambu"
     input:
         tuple val(sample_id), path(cds)
     output:
@@ -133,7 +133,7 @@ process merge_cds {
 }
 
 process cds_align {
-    label "isoforms"
+    label "nf_bambu"
     input:
         tuple val(sample_id), path(polished_cds), path(sorted_reads_dir)
     output:
@@ -156,7 +156,7 @@ process make_batches {
     Take a fasta file and creates batches for isONclust2 to work with
 
     */
-    label "isoforms"
+    label "nf_bambu"
     input:
         tuple val(sample_id), path(fastq)
     output:
@@ -192,7 +192,7 @@ process make_batches {
 }
 
 process clustering() {
-    label "isoforms"
+    label "nf_bambu"
 
     input:
         tuple val(sample_id), path(sorted_batches)
@@ -207,7 +207,7 @@ process clustering() {
 process cluster_quality() {
     // Run Kristoffer Sahlin's QC code.
     // For now just write out the PDF and CSV results. Move these to the report at some point
-    label "isoforms"
+    label "nf_bambu"
 
     input:
         path reference

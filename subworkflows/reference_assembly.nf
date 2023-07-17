@@ -4,7 +4,7 @@ process map_reads{
     Filter reads by mapping quality.
     Filter internally-primed reads.
     */
-    label "isoforms"
+    label "nf_bambu"
     cpus params.threads
 
     input:
@@ -32,13 +32,64 @@ process map_reads{
     """
 }
 
+process output2 {
+    debug true
+    // publish inputs to output directory
+    // label "isoforms"
+    label "nf_bambu"
+    publishDir (
+        params.out_dir,
+        mode: "copy",
+        saveAs: { dirname ? "$dirname/$fname" : fname }
+    )
+    input:
+        tuple path(fname), val(dirname)
+    output:
+        path fname
+    """
+    """
+}
+
 workflow reference_assembly {
     take:
        index
        reference
        fastq_reads
     main:
+        map_sample_ids_cls2 = {it ->
+        /* Harmonize tuples
+        output:
+            tuple val(sample_id), path('*.gff')
+        When there are multiple paths, will emit:
+            [sample_id, [path, path ..]]
+        when there's a single path, this:
+            [sample_id, path]
+        This closure makes both cases:
+            [[sample_id, path][sample_id, path]].
+        */
+            if (it[1].getClass() != java.util.ArrayList){
+                // If only one path, `it` will be [sample_id, path]
+                return [it]
+            }
+            l = [];
+            for (x in it[1]){
+                l.add(tuple(it[0], x))
+            }
+            return l
+        }
+
+
+        bam_results = Channel.empty()
+
         map_reads(fastq_reads.combine(index).combine(reference))
+
+        // map_reads.out.bam.view()
+        // map_reads.out.bam.flatMap(map_sample_ids_cls2).view()
+        // map_reads.out.bam.flatMap(map_sample_ids_cls2).map {it -> it[1]}.view()
+
+        bam_results = map_reads.out.bam.flatMap(map_sample_ids_cls2).map {it -> [it[1], null]}.concat(bam_results)
+        output2(bam_results)
+
     emit:
        bam = map_reads.out.bam
        stats = map_reads.out.stats
