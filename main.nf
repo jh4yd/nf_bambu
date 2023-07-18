@@ -542,6 +542,8 @@ workflow pipeline {
         software_versions = getVersions()
         workflow_params = getParams()
         input_reads = reads.map{ meta, samples, stats -> [meta, samples]}
+        input_reads.view()
+
         sample_ids = input_reads.flatMap({meta,samples -> meta.alias})
         stats = reads.map {
             it[2] ? it[2].resolve('per-read-stats.tsv') : null

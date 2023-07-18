@@ -30,3 +30,7 @@ bambuAnnotations <- prepareAnnotations(gtf_file)
 se.discoveryOnly <- bambu(reads = bam_files, annotations = bambuAnnotations,genome = fa_file, ncore = 1, quant = FALSE)
 
 writeToGTF(se.discoveryOnly, gff_name)
+
+se <- bambu(reads = bam_files, annotations = bambuAnnotations,genome = fa_file, ncore = 1)
+
+writeBambuOutput(se, path = "./bambu/")
