@@ -227,25 +227,43 @@ process assemble_transcripts_bambu{
     cpus params.threads
         
     input:
-        tuple val(sample_id), path(bam), path(ref_annotation), path(ref_genome)
+        //tuple val(sample_id), path(bam) from bamFile.map{it[0], it[1]}
+        val(bamFiles)
+        path(ref_annotation)
+        path(ref_genome)
         val use_ref_ann
     output:
         tuple val(sample_id), path('*.gff'), emit: gff_bundles
     script:
         def G_FLAG = use_ref_ann == false ? '' : "-G ${ref_annotation}"
-        def prefix =  bam.name.split(/\./)[0]
+        // def prefix =  bam.name.split(/\./)[0]
 
+        def sample_id_list = []
+        def bam_list = []
+        for (x in bamFiles){
+            sample_id_list.add(x[0])
+            bam_list.add(x[1])
+        }
+
+        def bam_string = bam_list.join(", ")
+        def sample_id_string = sample_id_list.join(", ")
     """
     pwd
-    echo ${sample_id}, ${bam}
+    
+    echo ${bam_string}
+    echo ${sample_id_string}
     echo ${ref_annotation}
     echo ${ref_genome}
     echo ${G_FLAG}
-    echo ${prefix}
-    
-    gtf_bambu.R ${bam} ${ref_genome} ${ref_annotation} ${prefix}
-    """
+    echo ${params.threads}
 
+    gtf_bambu.R --bamfiles \"${bam_string}\" \\
+                --ref_genome \"${ref_genome}\" \\
+                --ref_annotation \"${ref_annotation}\" --ncore ${params.threads}
+    """
+    //echo ${sample_id}, ${bam}
+    //echo ${prefix}
+    // 
 }
 
 
@@ -576,10 +594,12 @@ workflow pipeline {
 
             //assemble_transcripts(split_bam.out.bundles.flatMap(map_sample_ids_cls).combine(ref_annotation),use_ref_ann)
             bambu_input = split_bam.out.bundles.flatMap(map_sample_ids_cls).combine(ref_annotation).combine(ref_genome)
-            //bambu_input.view()
+            bambu_input_collection = split_bam.out.bundles.map(map_sample_ids_cls).collect()
+            // bambu_input.view()
+            // bambu_input_collection.view()
 
             //assemble_transcripts_bambu(split_bam.out.bundles.flatMap(map_sample_ids_cls).combine(ref_annotation),use_ref_ann, ref_genome)
-            assemble_transcripts_bambu(bambu_input,use_ref_ann)
+            assemble_transcripts_bambu(bambu_input_collection, ref_annotation, ref_genome, use_ref_ann)
 
             //merge_gff_bundles(assemble_transcripts.out.gff_bundles.groupTuple())
             merge_gff_bundles(assemble_transcripts_bambu.out.gff_bundles.groupTuple())

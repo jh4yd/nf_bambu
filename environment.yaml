@@ -28,6 +28,7 @@ dependencies:
     - parallel
     - scikit-learn==1.0.2
     - natsort
+    - r-optparse 
 # Fusion detection dependencies
 #    - bpipe=0.9.9.2
     - java-jdk
